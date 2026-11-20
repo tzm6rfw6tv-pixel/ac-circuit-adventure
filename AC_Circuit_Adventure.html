@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AC Circuit Adventure</title>
+<style>
+:root{--bg:#080d1d;--panel:#141e39;--panel2:#1e2c4e;--blue:#38bdf8;--purple:#a78bfa;--white:#f8fafc;--muted:#cbd5e1;--gold:#fde68a}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 20% 0%,#20204c 0,#080d1d 48%);color:var(--white);font:16px/1.5 system-ui,Arial,sans-serif}
+main{max-width:900px;margin:auto;padding:18px}.hero,.panel,.module{background:linear-gradient(145deg,#182544,#111a32);border:1px solid #33456c;border-radius:18px;padding:20px;margin:14px 0;box-shadow:0 12px 35px #0005}
+h1{font-size:clamp(2rem,7vw,3.5rem);line-height:1.05;margin:8px 0;color:#fff}h2{margin:8px 0 14px}p{color:var(--muted)}.eyebrow{color:var(--blue);font-weight:800;letter-spacing:.15em;font-size:.8rem}
+button,input{font:inherit;border-radius:10px;padding:11px 14px;border:1px solid #53688f}button{background:linear-gradient(90deg,#0284c7,#7c3aed);color:white;font-weight:700;cursor:pointer;margin:4px 4px 4px 0}button.secondary{background:#263653}button:disabled{opacity:.4;cursor:not-allowed}input{background:#0b1429;color:white;max-width:100%}.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:space-between}.stats{color:var(--gold);font-weight:800}.module{padding:15px}.module h3{margin:0}.tag{font-size:.8rem;color:#bfdbfe}.answers{display:grid;gap:9px;margin:15px 0}.answers button{text-align:left;background:#263653;border:1px solid #52678c}.answers button.chosen{outline:2px solid var(--blue)}.feedback{background:#0c1830;border-radius:12px;padding:14px;margin:12px 0}.bar{height:9px;background:#34435f;border-radius:99px;overflow:hidden}.bar>div{height:100%;background:linear-gradient(90deg,var(--blue),var(--purple))}canvas{width:100%;height:230px;background:#0a1429;border-radius:12px;border:1px solid #33456c}.hidden{display:none}.formula{background:#0b1429;padding:10px;border-radius:9px;margin:6px 0;color:#bfdbfe}small{color:#94a3b8}footer{text-align:center;color:#94a3b8;padding:20px;font-size:.8rem}
+</style>
+</head>
+<body><main>
+<section class="hero">
+<div class="eyebrow">PHYSICS LEARNING GAME • CLASS XII</div>
+<h1>⚡ AC CIRCUIT<br><span style="color:#a5b4fc">ADVENTURE</span></h1>
+<p>Petualangan Arus Bolak-Balik. Pelajari konsep, jelajahi gelombang, dan kumpulkan XP!</p>
+<div class="row"><label>Nama pemain<br><input id="player" maxlength="24" placeholder="Masukkan nama"></label><div class="stats">⭐ <span id="score">0</span> XP</div></div>
+<div class="row" style="margin-top:12px"><button onclick="show('modules')">Mulai Game</button><button class="secondary" onclick="show('materials')">Materi & Simulasi</button><button class="secondary" onclick="show('help')">Petunjuk</button></div>
+</section>
+<section id="modules" class="panel">
+<h2>🗺️ Peta Petualangan</h2><p>Selesaikan modul secara berurutan untuk membuka level berikutnya.</p><div id="moduleList"></div>
+</section>
+<section id="quiz" class="panel hidden">
+<div class="row"><span class="eyebrow" id="quizModule"></span><span id="questionCount" class="tag"></span></div><div class="bar"><div id="progress" style="width:0%"></div></div>
+<h2 id="question"></h2><div class="answers" id="answers"></div><div id="feedback" class="feedback hidden"></div><button id="checkBtn" onclick="checkAnswer()" disabled>Periksa Jawaban</button><button id="nextBtn" class="hidden" onclick="nextQuestion()">Berikutnya →</button><button class="secondary" onclick="show('modules')">Kembali ke modul</button>
+</section>
+<section id="materials" class="panel hidden">
+<h2>🔬 Laboratorium Gelombang AC</h2><p>Geser amplitudo dan frekuensi untuk mengubah gelombang sinus.</p>
+<label>Amplitudo: <b id="ampVal">5</b> V <input id="amp" type="range" min="1" max="10" value="5"></label><br>
+<label>Frekuensi: <b id="freqVal">2</b> Hz <input id="freq" type="range" min="1" max="10" value="2"></label>
+<canvas id="wave" width="800" height="230"></canvas>
+<div class="formula">T = 1/f &nbsp; • &nbsp; V efektif = Vm/√2 &nbsp; • &nbsp; I efektif = Im/√2</div>
+<div class="formula">XL = 2πfL &nbsp; • &nbsp; XC = 1/(2πfC)</div>
+<div class="formula">Z RLC seri = √(R² + (XL − XC)²)</div>
+<button class="secondary" onclick="show('modules')">Kembali ke modul</button>
+</section>
+<section id="help" class="panel hidden"><h2>📘 Petunjuk</h2><ol><li>Masukkan nama pemain.</li><li>Pilih modul yang sudah terbuka.</li><li>Jawab lima pertanyaan pada setiap modul.</li><li>Setiap jawaban benar bernilai 10 XP.</li><li>Selesaikan seluruh modul untuk meraih gelar AC Expert.</li></ol><p>Jawaban salah tetap disertai penjelasan supaya kamu bisa belajar.</p><button class="secondary" onclick="show('modules')">Kembali</button></section>
+<section id="result" class="panel hidden"><h2>🏆 Misi Selesai!</h2><h1 style="color:#fde68a">AC EXPERT</h1><p id="resultText"></p><button onclick="resetGame()">Main Lagi</button><button class="secondary" onclick="show('modules')">Lihat modul</button></section>
+<footer>AC CIRCUIT ADVENTURE • Media pembelajaran Fisika SMA</footer>
+</main>
+<script>
+const modules=[
+{title:"Mengenal Arus Bolak-Balik",desc:"Dasar AC, DC, dan penerapannya",q:[
+["Apa yang dimaksud arus bolak-balik (AC)?",["Arus satu arah","Arus yang arah dan besarannya berubah secara periodik","Arus selalu nol","Arus tanpa tegangan"],1,"Arus AC berubah arah dan besarannya secara periodik."],
+["Contoh sumber listrik AC adalah ...",["Baterai","Aki","Stopkontak rumah","Power bank"],2,"Stopkontak rumah menyediakan listrik AC."],
+["Apa kepanjangan DC?",["Direct Current","Dynamic Circuit","Double Current","Digital Current"],0,"DC adalah Direct Current atau arus searah."],
+["Perbedaan utama AC dan DC adalah ...",["AC selalu lebih kecil","DC berubah arah periodik","AC berubah arah, DC memiliki arah tetap","Keduanya sama"],2,"Arus AC berubah arah secara periodik, sedangkan DC memiliki arah tetap."],
+["Peralatan yang umumnya memakai listrik AC jaringan rumah adalah ...",["Lampu rumah terhubung stopkontak","Jam baterai","Remote baterai","Senter baterai"],0,"Peralatan rumah yang terhubung jaringan listrik umumnya menggunakan sumber AC."]
+]},
+{title:"Besaran Arus Bolak-Balik",desc:"Tegangan, arus, frekuensi, periode, RMS",q:[
+["Satuan frekuensi adalah ...",["Volt","Ampere","Hertz","Ohm"],2,"Frekuensi diukur dalam Hertz (Hz), jumlah siklus per detik."],
+["Jika frekuensi 50 Hz, periodenya ...",["0,02 s","0,2 s","2 s","50 s"],0,"T = 1/f = 1/50 = 0,02 sekon."],
+["Tegangan efektif sinusoidal adalah ...",["Vm√2","Vm/√2","2Vm","Vm²"],1,"Vef = Vm/√2."],
+["Jika tegangan maksimum 100 V, tegangan efektifnya ...",["50 V","100 V","70,7 V","141,4 V"],2,"Vef = 100/√2 ≈ 70,7 V."],
+["Hubungan frekuensi dan periode adalah ...",["Berbanding terbalik","Berbanding lurus","Tidak berhubungan","Selalu sama"],0,"f = 1/T, sehingga keduanya berbanding terbalik."]
+]},
+{title:"Grafik Gelombang AC",desc:"Amplitudo, periode, frekuensi, dan fase",q:[
+["Grafik arus AC sinusoidal berbentuk ...",["Garis lurus","Gelombang sinus","Segitiga","Kotak"],1,"Arus AC sinusoidal membentuk gelombang sinus."],
+["Amplitudo adalah ...",["Waktu satu siklus","Jumlah siklus per detik","Simpangan maksimum","Hambatan"],2,"Amplitudo adalah nilai maksimum dari titik keseimbangan."],
+["Jika frekuensi meningkat, periode akan ...",["Meningkat","Menurun","Tetap","Nol"],1,"T = 1/f, jadi periode mengecil saat frekuensi membesar."],
+["Satu gelombang penuh setara dengan fase ...",["90°","180°","270°","360°"],3,"Satu siklus penuh adalah 360° atau 2π radian."],
+["Dua gelombang sefase memiliki beda fase ...",["0°","90°","180°","270°"],0,"Gelombang sefase memiliki beda fase nol."]
+]},
+{title:"Rangkaian Arus Bolak-Balik",desc:"Resistor, induktor, kapasitor, dan RLC",q:[
+["Komponen R adalah ...",["Resistor","Induktor","Kapasitor","Transformator"],0,"R merupakan simbol resistor."],
+["Induktor dilambangkan dengan ...",["R","L","C","Z"],1,"Induktor dilambangkan L."],
+["Kapasitor menyimpan energi dalam ...",["Medan listrik","Medan gravitasi","Energi mekanik","Gelombang suara"],0,"Kapasitor menyimpan energi dalam medan listrik."],
+["Rumus reaktansi induktif adalah ...",["1/(2πfL)","2πfL","2πfC","R/I"],1,"XL = 2πfL."],
+["Rangkaian RLC terdiri atas ...",["Resistor, induktor, kapasitor","Relay, lampu, kabel","Baterai, motor, sakelar","Resistor dan baterai"],0,"RLC merupakan gabungan resistor, induktor, dan kapasitor."]
+]},
+{title:"Tantangan Perhitungan",desc:"Uji kemampuan menghitung besaran AC",q:[
+["Vm = 200 V. Tegangan efektifnya ...",["100 V","141,4 V","200 V","282,8 V"],1,"Vef = 200/√2 ≈ 141,4 V."],
+["Frekuensi 25 Hz. Periodenya ...",["0,04 s","0,4 s","4 s","25 s"],0,"T = 1/25 = 0,04 sekon."],
+["L = 0,1 H dan f = 50 Hz. XL (π = 3,14) adalah ...",["3,14 Ω","15,7 Ω","31,4 Ω","50 Ω"],2,"XL = 2πfL = 31,4 Ω."],
+["C = 100 μF dan f = 50 Hz. XC kira-kira ...",["3,18 Ω","31,8 Ω","318 Ω","3.180 Ω"],1,"XC = 1/(2πfC) ≈ 31,8 Ω."],
+["Impedansi RLC seri adalah ...",["R + XL + XC","√(R² + (XL − XC)²)","R × XL × XC","XL − XC"],1,"Z = √(R² + (XL − XC)²)."]
+]}];
+let score=0,unlocked=0,mod=0,qi=0,choice=-1,answered=false;
+const $=id=>document.getElementById(id);
+function show(id){document.querySelectorAll("main>section").forEach(s=>s.classList.add("hidden"));$(id).classList.remove("hidden");if(id==="modules")renderModules();if(id==="materials")drawWave();}
+function renderModules(){$("score").textContent=score;$("moduleList").innerHTML=modules.map((m,i)=>`<div class="module"><div class="row"><div><h3>${i+1}. ${m.title}</h3><span class="tag">${m.desc}</span></div><b>${i<=unlocked?"🔓":"🔒"}</b></div><button ${i>unlocked?"disabled":""} onclick="startModule(${i})">${i<unlocked?"Ulangi Modul":i===unlocked?"Mulai Modul":"Terkunci"}</button></div>`).join("");}
+function startModule(i){mod=i;qi=0;show("quiz");renderQuestion();}
+function renderQuestion(){let q=modules[mod].q[qi];choice=-1;answered=false;$("quizModule").textContent="MODUL "+(mod+1)+" • "+modules[mod].title;$("questionCount").textContent=`SOAL ${qi+1}/5`;$("progress").style.width=((qi+1)/5*100)+"%";$("question").textContent=q[0];$("answers").innerHTML=q[1].map((a,i)=>`<button id="ans${i}" onclick="selectAnswer(${i})">${"ABCD"[i]}. ${a}</button>`).join("");$("feedback").classList.add("hidden");$("checkBtn").classList.remove("hidden");$("checkBtn").disabled=true;$("nextBtn").classList.add("hidden");}
+function selectAnswer(i){if(answered)return;choice=i;[0,1,2,3].forEach(n=>$("ans"+n).classList.toggle("chosen",n===i));$("checkBtn").disabled=false;}
+function checkAnswer(){if(choice<0||answered)return;answered=true;let q=modules[mod].q[qi],ok=choice===q[2];if(ok)score+=10;$("score").textContent=score;$("feedback").classList.remove("hidden");$("feedback").innerHTML=`<b style="color:${ok?"#86efac":"#fca5a5"}">${ok?"Benar! +10 XP":"Belum tepat."}</b><br>${q[3]}`;[0,1,2,3].forEach(n=>{$("ans"+n).disabled=true;if(n===q[2])$("ans"+n).style.borderColor="#4ade80";});$("checkBtn").classList.add("hidden");$("nextBtn").classList.remove("hidden");$("nextBtn").textContent=qi===4?(mod===4?"Lihat hasil akhir":"Selesaikan modul"):"Pertanyaan berikutnya →";}
+function nextQuestion(){if(qi<4){qi++;renderQuestion();return;}unlocked=Math.max(unlocked,Math.min(mod+1,4));if(mod===4){$("resultText").textContent=`${$("player").value||"Pemain"}, kamu memperoleh ${score} XP dari total 250 XP (${Math.round(score/250*100)}%). Terima kasih sudah belajar!`;show("result");}else show("modules");}
+function resetGame(){score=0;unlocked=0;mod=0;qi=0;$("score").textContent=0;show("modules");}
+function drawWave(){let c=$("wave"),ctx=c.getContext("2d"),a=+$("amp").value,f=+$("freq").value,w=c.width,h=c.height;ctx.clearRect(0,0,w,h);ctx.strokeStyle="#34476b";ctx.lineWidth=1;for(let x=0;x<=w;x+=80){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,h);ctx.stroke()}for(let y=20;y<h;y+=38){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(w,y);ctx.stroke()}ctx.strokeStyle="#64748b";ctx.beginPath();ctx.moveTo(0,h/2);ctx.lineTo(w,h/2);ctx.stroke();ctx.strokeStyle="#38bdf8";ctx.lineWidth=3;ctx.beginPath();for(let x=0;x<=w;x++){let y=h/2-(a/10)*(h*.42)*Math.sin(2*Math.PI*f*x/w*2);x===0?ctx.moveTo(x,y):ctx.lineTo(x,y)}ctx.stroke();$("ampVal").textContent=a;$("freqVal").textContent=f;}
+$("amp").addEventListener("input",drawWave);$("freq").addEventListener("input",drawWave);
+renderModules();drawWave();
+</script></body></html>
